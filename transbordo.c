@@ -18,6 +18,8 @@ nCondition transEnPargua;
 
 void inicializar(int p){
     mon = nMakeMonitor();
+    transEnChacao = nMakeCondition(mon);
+    transEnPargua = nMakeCondition(mon);
     esperaHaciaChacao = MakeFifoQueue();
     esperaHaciaPargua = MakeFifoQueue();
     enPargua = new int[p];
@@ -46,12 +48,12 @@ void transbordoAChacao(int v){
                 if (haciaPargua == 0){
                     // casos de trans en Chacao
                 }
-                nWait(mon);
+                nWaitCondition(transEnPargua);
             }
         } else{
             PutObj(esperaHaciaChacao, v);
             nNotifyAll(mon);
-            nWait(mon);
+            nWaitCondition(transEnPargua);
         }
 
     }
@@ -62,7 +64,7 @@ void transbordoAChacao(int v){
     nEnter(mon);
     haciaChacao--;
     enChacao[transdis] = 1;
-    nNotifyAll(mon);
+    nSignalCondition(transEnChacao);
     nExit(mon);
 }
 void transbordoAPargua(int v){}
