@@ -5,10 +5,10 @@
 
 
 
-int[] enPargua;
-int[] enChacao;
-int haciaPargua;
-int haciaChacao;
+int *enPargua;
+int *enChacao;
+int transHaciaPargua;
+int transHaciaChacao;
 int numTRansbordadores;
 nMonitor mon;
 FifoQueue esperaHaciaPargua;
@@ -22,30 +22,35 @@ void inicializar(int p){
     transEnPargua = nMakeCondition(mon);
     esperaHaciaChacao = MakeFifoQueue();
     esperaHaciaPargua = MakeFifoQueue();
-    enPargua = new int[p];
-    enChacao = new int[p];
-    haciaChacao = 0;
-    haciaPargua = 0;
+    enPargua = nMalloc(sizeof(int) * p);
+	enChacao = nMalloc(sizeof(int) * p);
+	transHaciaChacao = 0;
+	transHaciaPargua = 0;
     numTRansbordadores = p;
-    for (i=0; i<numTRansbordadores; i++) {
+    for (int i=0; i<numTRansbordadores; i++) {
         enPargua[i] = 1;
         enChacao[i] = 0;
-  }
+    }
 }
 void finalizar(){
 	DestroyFifoQueue(esperaHaciaChacao);
 	DestroyFifoQueue(esperaHaciaPargua);
 	nDestroyCondition(transEnChacao);
 	nDestroyCondition(transEnPargua);
-	nDestroyMonitor(mon)
+	nDestroyMonitor(mon);
+	nFree(enChacao);
+	nFree(enPargua);
 }
 void transbordoAChacao(int v){
+    int vehiculoATransportar = v;
+    int primerVehiculo;
     nEnter(mon);
-	PutObj(esperaHaciaChacao, v);
+	PutObj(esperaHaciaChacao, &vehiculoATransportar);
     int transdisponible = -1;
     while (transdisponible == -1){
-		int vehiculo = GetObj(esperaHaciaChacao);
-		if (vehiculo == v){
+		int *vehiculo = (int *)GetObj(esperaHaciaChacao);
+		primerVehiculo = *vehiculo;
+		if (vehiculoATransportar == primerVehiculo){
 			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enPargua[i] == 1){
@@ -55,9 +60,9 @@ void transbordoAChacao(int v){
 			}
 			if (transdisponible == -1){
 				// Caso: no hay transbordador disponible en Pargua
-                if (haciaPargua == 0){
+                if (transHaciaPargua == 0){
 					// Caso: ningun transbordador se dirige a Pargua
-                    if (haciaChacao = numTRansbordadores){
+                    if (transHaciaChacao == numTRansbordadores){
 						// Caso: todos los transbordadores se dirigen a Chacao
 						nWaitCondition(transEnChacao);
 						continue;
@@ -77,11 +82,11 @@ void transbordoAChacao(int v){
 								}
 							}
 							enChacao[transdisponible] = 0;
-							haciaPargua++;
+							transHaciaPargua++;
 							nExit(mon);
 							haciaPargua(transdisponible, -1);
 							nEnter(mon);
-							haciaPargua--;
+							transHaciaPargua--;
 							enPargua[transdisponible] = 1;
 						}
 					}
@@ -99,22 +104,25 @@ void transbordoAChacao(int v){
 		}
     }
     enPargua[transdisponible] = 0;
-    haciaChacao++;
+	transHaciaChacao++;
     nExit(mon);
     haciaChacao(transdisponible, v);
     nEnter(mon);
-    haciaChacao--;
+	transHaciaChacao--;
     enChacao[transdisponible] = 1;
     nSignalCondition(transEnChacao);
     nExit(mon);
 }
 void transbordoAPargua(int v){
+    int vehiculoATransportar = v;
+    int primerVehiculo;
     nEnter(mon);
-	PutObj(esperaHaciaPargua, v);
+	PutObj(esperaHaciaPargua, &vehiculoATransportar);
     int transdisponible = -1;
     while (transdisponible == -1){
-		int vehiculo = GetObj(esperaHaciaPargua);
-		if (vehiculo == v){
+        int *vehiculo = (int *)GetObj(esperaHaciaChacao);
+        primerVehiculo = *vehiculo;
+        if (vehiculoATransportar == primerVehiculo){
 			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enChacao[i] == 1){
@@ -124,9 +132,9 @@ void transbordoAPargua(int v){
 			}
 			if (transdisponible == -1){
 				// Caso: no hay transbordador disponible en Chacao
-                if (haciaChacao == 0){
+                if (transHaciaChacao == 0){
 					// Caso: ningun transbordador se dirige a Chacao
-                    if (haciaPargua = numTRansbordadores){
+                    if (transHaciaPargua == numTRansbordadores){
 						// Caso: todos los transbordadores se dirigen a Pargua
 						nWaitCondition(transEnPargua);
 						continue;
@@ -146,11 +154,11 @@ void transbordoAPargua(int v){
 								}
 							}
 							enPargua[transdisponible] = 0;
-							haciaChacao++;
+							transHaciaChacao++;
 							nExit(mon);
 							haciaChacao(transdisponible, -1);
 							nEnter(mon);
-							haciaChacao--;
+							transHaciaChacao--;
 							enChacao[transdisponible] = 1;
 						}
 					}
@@ -168,11 +176,11 @@ void transbordoAPargua(int v){
 		}
     }
     enChacao[transdisponible] = 0;
-    haciaPargua++;
+	transHaciaPargua++;
     nExit(mon);
     haciaPargua(transdisponible, v);
     nEnter(mon);
-    haciaPargua--;
+	transHaciaPargua--;
     enPargua[transdisponible] = 1;
     nSignalCondition(transEnPargua);
     nExit(mon);
