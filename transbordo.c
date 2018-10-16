@@ -35,27 +35,43 @@ void inicializar(int p){
 void finalizar(){}
 void transbordoAChacao(int v){
     nEnter(mon);
+	PutObj(esperaHaciaChacao, v);
     int transdis = -1;
     while (transdis == -1){
-        if (EmptyFifoQueue(esperaHaciaChacao)){
-            for (int i = 0; i < numTRansbordadores ; ++i) {
-                if (enPargua[i] == 1){
-                    transdis = i;
-                    break;
-                }
-            }
-            if (transdis == -1){
+		int vehiculo = GetObj(esperaHaciaChacao);
+		if (vehiculo == v){				
+			for (int i = 0; i < numTRansbordadores ; ++i) {
+				if (enPargua[i] == 1){
+					transdis = i;
+					break;
+				}
+			}
+			if (transdis == -1){
                 if (haciaPargua == 0){
                     // casos de trans en Chacao
-                }
-                nWaitCondition(transEnPargua);
+					if (haciaChacao = numTRansbordadores){
+						nWaitCondition(transEnPargua);
+						continue;
+					} else{
+						int transchacao
+						for (int i = 0; i < numTRansbordadores ; ++i) {
+							if (enChacao[i] == 1){
+								transchacao = i;
+								break;
+							}
+						}						
+					}
+                } else{
+					PushObj(esperaHaciaChacao, vehiculo);
+					nWaitCondition(transEnPargua);
+				}
             }
-        } else{
-            PutObj(esperaHaciaChacao, v);
-            nNotifyAll(mon);
-            nWaitCondition(transEnPargua);
-        }
-
+		} else{			
+			PushObj(esperaHaciaChacao, vehiculo);
+			PutObj(esperaHaciaChacao, v);
+			nSignalCondition(transEnPargua);
+			nWaitCondition(transEnPargua);
+		}
     }
     enPargua[transdis] = 0;
     haciaChacao++;
