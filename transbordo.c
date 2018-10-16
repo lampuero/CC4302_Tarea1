@@ -46,7 +46,7 @@ void transbordoAChacao(int v){
     while (transdisponible == -1){
 		int vehiculo = GetObj(esperaHaciaChacao);
 		if (vehiculo == v){
-			// caso primero en la fila
+			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enPargua[i] == 1){
 					transdisponible = i;
@@ -54,7 +54,7 @@ void transbordoAChacao(int v){
 				}
 			}
 			if (transdisponible == -1){
-				// caso no hay transbordador disponible en Pargua
+				// Caso: no hay transbordador disponible en Pargua
                 if (haciaPargua == 0){
 					// Caso: ningun transbordador se dirige a Pargua
                     if (haciaChacao = numTRansbordadores){
@@ -83,7 +83,6 @@ void transbordoAChacao(int v){
 							nEnter(mon);
 							haciaPargua--;
 							enPargua[transdisponible] = 1;
-							transdis = transchacao;
 						}
 					}
                 } else{
@@ -110,12 +109,13 @@ void transbordoAChacao(int v){
     nExit(mon);
 }
 void transbordoAPargua(int v){
-	nEnter(mon);
+    nEnter(mon);
 	PutObj(esperaHaciaPargua, v);
     int transdisponible = -1;
     while (transdisponible == -1){
 		int vehiculo = GetObj(esperaHaciaPargua);
-		if (vehiculo == v){				
+		if (vehiculo == v){
+			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enChacao[i] == 1){
 					transdisponible = i;
@@ -123,16 +123,22 @@ void transbordoAPargua(int v){
 				}
 			}
 			if (transdisponible == -1){
+				// Caso: no hay transbordador disponible en Chacao
                 if (haciaChacao == 0){
+					// Caso: ningun transbordador se dirige a Chacao
                     if (haciaPargua = numTRansbordadores){
+						// Caso: todos los transbordadores se dirigen a Pargua
 						nWaitCondition(transEnPargua);
 						continue;
 					} else{
+						// Caso: existe transbordador en Pargua
 						int l = LengthFifoQueue(esperaHaciaChacao);
 						if (l > 0){
-							nSignalCondition(transEnChacao);
-							nWaitCondition(transEnPargua);
+							// Caso: existe vehiculo esperando en Pargua
+							nSignalCondition(transEnPargua);
+							nWaitCondition(transEnChacao);
 						} else{
+							// Caso: no existe vehiculo esperando en Pargua
 							for (int i = 0; i < numTRansbordadores ; ++i) {
 								if (enPargua[i] == 1){
 									transdisponible = i;
@@ -149,13 +155,14 @@ void transbordoAPargua(int v){
 						}
 					}
                 } else{
+					// Caso: algun transbordador se dirige a Chacao
 					PushObj(esperaHaciaPargua, vehiculo);
 					nWaitCondition(transEnChacao);
 				}
             }
-		} else{			
+		} else{
+			// Caso: no es primero en fila
 			PushObj(esperaHaciaPargua, vehiculo);
-			PutObj(esperaHaciaPargua, v);
 			nSignalCondition(transEnChacao);
 			nWaitCondition(transEnChacao);
 		}
