@@ -32,7 +32,13 @@ void inicializar(int p){
         enChacao[i] = 0;
   }
 }
-void finalizar(){}
+void finalizar(){
+	DestroyFifoQueue(esperaHaciaChacao);
+	DestroyFifoQueue(esperaHaciaPargua);
+	nDestroyCondition(transEnChacao);
+	nDestroyCondition(transEnPargua);
+	nDestroyMonitor(mon)
+}
 void transbordoAChacao(int v){
     nEnter(mon);
 	PutObj(esperaHaciaChacao, v);
