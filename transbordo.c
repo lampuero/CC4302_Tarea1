@@ -53,7 +53,7 @@ void transbordoAChacao(int v){
 						nWaitCondition(transEnPargua);
 						continue;
 					} else{
-						int transchacao
+						int transchacao;
 						for (int i = 0; i < numTRansbordadores ; ++i) {
 							if (enChacao[i] == 1){
 								transchacao = i;
