@@ -2,127 +2,136 @@
 #include "transbordo.h"
 #include "fifoqueues.h"
 
-int *pointerChacao;
-int *pointerPargua;
+typedef struct {
+    nCondition condition;
+} Espera;
 
-int *enPargua;
-int *enChacao;
-int transHaciaPargua;
-int transHaciaChacao;
-int numTRansbordadores;
+int *barcosEnPargua;
+int *barcosEnChacao;
+
+int barcosHaciaPargua;
+int barcosHaciaChacao;
+
+int esperaParaChacao;
+int esperaParaPargua;
+
+int numeroDeBarcos;
+
 nMonitor mon;
-FifoQueue esperaHaciaPargua;
-FifoQueue esperaHaciaChacao;
-nCondition transEnChacao;
-nCondition transEnPargua;
+
+FifoQueue filaEsperaHaciaPargua;
+FifoQueue filaEsperaHaciaChacao;
+
+nCondition transbordadorEnOrilla;
+
 
 
 void inicializar(int p){
     mon = nMakeMonitor();
-    transEnChacao = nMakeCondition(mon);
-    transEnPargua = nMakeCondition(mon);
-    esperaHaciaChacao = MakeFifoQueue();
-    esperaHaciaPargua = MakeFifoQueue();
-    enPargua = nMalloc(sizeof(int) * p);
-	enChacao = nMalloc(sizeof(int) * p);
-	transHaciaChacao = 0;
-	transHaciaPargua = 0;
-    pointerChacao = 0;
-    pointerPargua = 0;
-    numTRansbordadores = p;
-    for (int i=0; i<numTRansbordadores; i++) {
-        enPargua[i] = 1;
-        enChacao[i] = 0;
+
+    transbordadorEnOrilla = nMakeCondition(mon);
+
+    filaEsperaHaciaChacao = MakeFifoQueue();
+    filaEsperaHaciaPargua = MakeFifoQueue();
+
+    barcosEnChacao = nMalloc(sizeof(int) * p);
+    barcosEnPargua = nMalloc(sizeof(int) * p);
+
+    barcosHaciaChacao = 0;
+    barcosHaciaPargua = 0;
+
+    esperaParaChacao = FALSE;
+    esperaParaPargua = FALSE;
+
+    numeroDeBarcos = p;
+
+    for (int i=0; i<numeroDeBarcos; i++) {
+        barcosEnPargua[i] = 1;
+        barcosEnChacao[i] = 0;
     }
 }
 void finalizar(){
-	DestroyFifoQueue(esperaHaciaChacao);
-	DestroyFifoQueue(esperaHaciaPargua);
-	nDestroyCondition(transEnChacao);
-	nDestroyCondition(transEnPargua);
+	DestroyFifoQueue(filaEsperaHaciaChacao);
+	DestroyFifoQueue(filaEsperaHaciaPargua);
+
+	nDestroyCondition(transbordadorEnOrilla);
+
 	nDestroyMonitor(mon);
-	nFree(enChacao);
-	nFree(enPargua);
+
+	nFree(barcosEnChacao);
+	nFree(barcosEnPargua);
 }
 void transbordoAChacao(int v){
-    //int primerVehiculo;
+    Espera *espera;
     nEnter(mon);
-    int *p = ++pointerChacao;
-    PutObj(esperaHaciaChacao, p);
-    int transdisponible = -1;
-    while (transdisponible == -1){
-        if (EmptyFifoQueue(esperaHaciaChacao)){
-            nExit(mon);
-            return;
+    espera->condition = nMakeCondition(mon);
+    if (!EmptyFifoQueue(filaEsperaHaciaChacao) || esperaParaChacao){
+        PutObj(filaEsperaHaciaChacao, espera);
+        //Espera *primer = (espera *)GetObj(esperaHaciaChacao);
+        //nSignalCondition(primer->condition);
+        nWaitCondition(espera->condition);
+    }
+    esperaParaChacao = TRUE;
+    int tengoTransbordador = FALSE;
+    int transbordadorDisponible;
+    while (!tengoTransbordador){
+        for (int i = 0; i < numeroDeBarcos ; ++i) {
+            if (barcosEnPargua[i] == 1){
+                transbordadorDisponible = i;
+                tengoTransbordador = TRUE;
+                break;
+            }
         }
-        int *vehiculo = (int *)GetObj(esperaHaciaChacao);
-        //nPrintf("Sacaro Chacao %x\n", vehiculo);
-        //primerVehiculo = *vehiculo;
-        if (vehiculo == 0){
+        if(tengoTransbordador){
+            break;
+        }
+        if (transbordadoresHaciaPargua > 0){
+            // Caso: Viene algun transbordador a Pargua
+            nWaitCondition(transbordadorEnOrilla);
+            continue;
+
+        } else if(transHaciaChacao == numeroTransbordadores){
+            // Caso: Todos los transbordadores se dirigen a Chacao
+            nWaitCondition(transbordadorEnOrilla);
+            continue;
+        } else if(EmptyFifoQueue(esperaHaciaPargua) && !esperaParaPargua){
+            // Caso: No existe vehiculo esperando en Chacao
+            for (int i = 0; i < numTRansbordadores ; ++i) {
+                if (tranbordadoresEnChacao[i] == 1){
+                    transbordadorDisponible = i;
+                    tengoTransbordador = TRUE;
+                    break;
+                }
+            }
+            if(tengoTransbordador){
+                barcosEnChacao[transdisponible] = 0;
+                barcosHaciaPargua++;
+                nExit(mon);
+                haciaPargua(transdisponible, -1);
+                nEnter(mon);
+                barcosHaciaPargua--;
+                barcosEnPargua[transdisponible] = 1;
+                break;
+            }
+        } else{
+            // Caso: Existe vehiculo esperando en Chacao
+            nSignalCondition(transbordadorEnOrilla);
+            nWaitCondition(transbordadorEnOrilla);
             continue;
         }
-        if (p == vehiculo){
-			// Caso: primero en la fila
-			for (int i = 0; i < numTRansbordadores ; ++i) {
-				if (enPargua[i] == 1){
-					transdisponible = i;
-					break;
-				}
-			}
-			if (transdisponible == -1){
-				// Caso: no hay transbordador disponible en Pargua
-                if (transHaciaPargua == 0){
-					// Caso: ningun transbordador se dirige a Pargua
-                    if (transHaciaChacao == numTRansbordadores){
-						// Caso: todos los transbordadores se dirigen a Chacao
-						nWaitCondition(transEnChacao);
-						continue;
-					} else{
-						// Caso: existe transbordador en Chacao
-						int l = LengthFifoQueue(esperaHaciaPargua);
-						if (l > 0){
-							// Caso: existe vehiculo esperando en Chacao
-							nSignalCondition(transEnChacao);
-							nWaitCondition(transEnPargua);
-						} else{
-							// Caso: no existe vehiculo esperando en Chacao
-							for (int i = 0; i < numTRansbordadores ; ++i) {
-								if (enChacao[i] == 1){
-									transdisponible = i;
-									break;
-								}
-							}
-							enChacao[transdisponible] = 0;
-							transHaciaPargua++;
-							nExit(mon);
-							haciaPargua(transdisponible, -1);
-							nEnter(mon);
-							transHaciaPargua--;
-							enPargua[transdisponible] = 1;
-						}
-					}
-                } else{
-					// Caso: algun transbordador se dirige a Pargua
-					PushObj(esperaHaciaChacao, vehiculo);
-					nWaitCondition(transEnPargua);
-				}
-            }
-		} else{
-			// Caso: no es primero en fila
-			PushObj(esperaHaciaChacao, vehiculo);
-			nSignalCondition(transEnPargua);
-			nWaitCondition(transEnPargua);
-		}
     }
-    enPargua[transdisponible] = 0;
-	transHaciaChacao++;
+    barcosEnPargua[transbordadorDisponible] = 0;
+    barcosHaciaChacao++;
     nExit(mon);
     haciaChacao(transdisponible, v);
     nEnter(mon);
-    //nPrintf("LLego a Chacao %i en %i\n", v, transdisponible);
-	transHaciaChacao--;
-    enChacao[transdisponible] = 1;
-    nSignalCondition(transEnChacao);
+    barcosHaciaChacao--;
+    barcosEnChacao[transbordadorDisponible] = 1;
+    nSignalCondition(transbordadorEnOrilla);
+    if (!EmptyFifoQueue(filaEsperaHaciaChacao)){
+        Espera *primer = (espera *)GetObj(filaEsperaHaciaChacao);
+        nSignalCondition(primer->condition);
+    }
     nExit(mon);
 }
 void transbordoAPargua(int v){
@@ -174,11 +183,11 @@ void transbordoAPargua(int v){
 								}
 							}
 							enPargua[transdisponible] = 0;
-							transHaciaChacao++;
+                            transbordadoresHaciaChacao++;
 							nExit(mon);
 							haciaChacao(transdisponible, -1);
 							nEnter(mon);
-							transHaciaChacao--;
+                            transbordadoresHaciaChacao--;
 							enChacao[transdisponible] = 1;
 						}
 					}
@@ -196,12 +205,12 @@ void transbordoAPargua(int v){
 		}
     }
     enChacao[transdisponible] = 0;
-	transHaciaPargua++;
+    transbordadoresHaciaPargua++;
     nExit(mon);
     haciaPargua(transdisponible, v);
     nEnter(mon);
     //nPrintf("LLego a Pargua %i en %i\n", v, transdisponible);
-	transHaciaPargua--;
+    transbordadoresHaciaPargua--;
     enPargua[transdisponible] = 1;
     nSignalCondition(transEnPargua);
     nExit(mon);
