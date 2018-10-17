@@ -92,7 +92,7 @@ void transbordoAChacao(int v){
             // Caso: Todos los transbordadores se dirigen a Chacao
             nWaitCondition(transbordadorEnOrilla);
             continue;
-        } else if(EmptyFifoQueue(filaEsperaHaciaPargua) && !esperaParaPargua){
+        } else if(!esperaParaPargua){
             // Caso: No existe vehiculo esperando en Chacao
             for (int i = 0; i < numeroDeBarcos ; ++i) {
                 if (barcosEnChacao[i] == 1){
@@ -102,13 +102,13 @@ void transbordoAChacao(int v){
                 }
             }
             if(tengoTransbordador){
-                barcosEnChacao[transdisponible] = 0;
+                barcosEnChacao[transbordadorDisponible] = 0;
                 barcosHaciaPargua++;
                 nExit(mon);
-                haciaPargua(transdisponible, -1);
+                haciaPargua(transbordadorDisponible, -1);
                 nEnter(mon);
                 barcosHaciaPargua--;
-                barcosEnPargua[transdisponible] = 1;
+                barcosEnPargua[transbordadorDisponible] = 1;
                 break;
             }
         } else{
@@ -126,7 +126,7 @@ void transbordoAChacao(int v){
         nSignalCondition(primer->condition);
     }
     nExit(mon);
-    haciaChacao(transdisponible, v);
+    haciaChacao(transbordadorDisponible, v);
     nEnter(mon);
     barcosHaciaChacao--;
     barcosEnChacao[transbordadorDisponible] = 1;
