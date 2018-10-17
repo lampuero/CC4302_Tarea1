@@ -43,15 +43,14 @@ void finalizar(){
 	nFree(enPargua);
 }
 void transbordoAChacao(int v){
-    int vehiculoATransportar = v;
     int primerVehiculo;
     nEnter(mon);
-    PutObj(esperaHaciaChacao, &vehiculoATransportar);
+    PutObj(esperaHaciaChacao, &v);
     int transdisponible = -1;
     while (transdisponible == -1){
         int *vehiculo = (int *)GetObj(esperaHaciaChacao);
         primerVehiculo = *vehiculo;
-        if (vehiculoATransportar == primerVehiculo){
+        if (v == primerVehiculo){
 			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enPargua[i] == 1){
@@ -116,15 +115,14 @@ void transbordoAChacao(int v){
     nExit(mon);
 }
 void transbordoAPargua(int v){
-    int vehiculoATransportar = v;
     int primerVehiculo;
     nEnter(mon);
-    PutObj(esperaHaciaPargua, &vehiculoATransportar);
+    PutObj(esperaHaciaPargua, &v);
     int transdisponible = -1;
     while (transdisponible == -1){
         int *vehiculo = (int *)GetObj(esperaHaciaPargua);
         primerVehiculo = *vehiculo;
-        if (vehiculoATransportar == primerVehiculo){
+        if (v == primerVehiculo){
 			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enChacao[i] == 1){
