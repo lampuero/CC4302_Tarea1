@@ -62,7 +62,7 @@ void finalizar(){
 }
 
 void transbordoAChacao(int v){
-    Espera *espera;
+    Espera *espera = (Espera*)nMalloc(sizeof(*espera));
     nEnter(mon);
     espera->condition = nMakeCondition(mon);
     if (!EmptyFifoQueue(filaEsperaHaciaChacao) || esperaParaChacao){
@@ -88,7 +88,7 @@ void transbordoAChacao(int v){
             nWaitCondition(transbordadorEnOrilla);
             continue;
 
-        } else if(barcosHaciaChacao == numeroTransbordadores){
+        } else if(barcosHaciaChacao == numeroDeBarcos){
             // Caso: Todos los transbordadores se dirigen a Chacao
             nWaitCondition(transbordadorEnOrilla);
             continue;
@@ -122,7 +122,7 @@ void transbordoAChacao(int v){
     barcosHaciaChacao++;
     esperaParaChacao = FALSE;
     if (!EmptyFifoQueue(filaEsperaHaciaChacao)){
-        Espera *primer = (espera *)GetObj(filaEsperaHaciaChacao);
+        Espera *primer = (Espera *)GetObj(filaEsperaHaciaChacao);
         nSignalCondition(primer->condition);
     }
     nExit(mon);
@@ -135,7 +135,7 @@ void transbordoAChacao(int v){
 }
 
 void transbordoAPargua(int v){
-    Espera *espera;
+    Espera *espera = (Espera*)nMalloc(sizeof(*espera));
     nEnter(mon);
     espera->condition = nMakeCondition(mon);
     if (!EmptyFifoQueue(filaEsperaHaciaPargua) || esperaParaPargua){
@@ -161,7 +161,7 @@ void transbordoAPargua(int v){
             nWaitCondition(transbordadorEnOrilla);
             continue;
 
-        } else if(barcosHaciaPargua == numeroTransbordadores){
+        } else if(barcosHaciaPargua == numeroDeBarcos){
             // Caso: Todos los transbordadores se dirigen a Pargua
             nWaitCondition(transbordadorEnOrilla);
             continue;
@@ -195,7 +195,7 @@ void transbordoAPargua(int v){
     barcosHaciaPargua++;
     esperaParaPargua = FALSE;
     if (!EmptyFifoQueue(filaEsperaHaciaPargua)){
-        Espera *primer = (espera *)GetObj(filaEsperaHaciaPargua);
+        Espera *primer = (Espera *)GetObj(filaEsperaHaciaPargua);
         nSignalCondition(primer->condition);
     }
     nExit(mon);
