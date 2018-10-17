@@ -2,8 +2,8 @@
 #include "transbordo.h"
 #include "fifoqueues.h"
 
-
-
+int *pointerChacao;
+int *pointerPargua;
 
 int *enPargua;
 int *enChacao;
@@ -27,6 +27,8 @@ void inicializar(int p){
 	enChacao = nMalloc(sizeof(int) * p);
 	transHaciaChacao = 0;
 	transHaciaPargua = 0;
+    pointerChacao = 0;
+    pointerPargua = 0;
     numTRansbordadores = p;
     for (int i=0; i<numTRansbordadores; i++) {
         enPargua[i] = 1;
@@ -43,14 +45,23 @@ void finalizar(){
 	nFree(enPargua);
 }
 void transbordoAChacao(int v){
-    int primerVehiculo;
+    //int primerVehiculo;
     nEnter(mon);
-    PutObj(esperaHaciaChacao, &v);
+    int *p = ++pointerChacao;
+    PutObj(esperaHaciaChacao, p);
     int transdisponible = -1;
     while (transdisponible == -1){
+        if (EmptyFifoQueue(esperaHaciaChacao)){
+            nExit(mon);
+            return;
+        }
         int *vehiculo = (int *)GetObj(esperaHaciaChacao);
-        primerVehiculo = *vehiculo;
-        if (v == primerVehiculo){
+        //nPrintf("Sacaro Chacao %x\n", vehiculo);
+        //primerVehiculo = *vehiculo;
+        if (vehiculo == 0){
+            continue;
+        }
+        if (p == vehiculo){
 			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enPargua[i] == 1){
@@ -115,14 +126,23 @@ void transbordoAChacao(int v){
     nExit(mon);
 }
 void transbordoAPargua(int v){
-    int primerVehiculo;
+    //int primerVehiculo;
     nEnter(mon);
-    PutObj(esperaHaciaPargua, &v);
+    int *p = ++pointerPargua;
+    PutObj(esperaHaciaPargua, p);
     int transdisponible = -1;
     while (transdisponible == -1){
+        if (EmptyFifoQueue(esperaHaciaPargua)){
+            nExit(mon);
+            return;
+        }
         int *vehiculo = (int *)GetObj(esperaHaciaPargua);
-        primerVehiculo = *vehiculo;
-        if (v == primerVehiculo){
+        //nPrintf("Sacado Pargua %d\n", vehiculo);
+        //primerVehiculo = *vehiculo;
+        if (vehiculo == 0){
+            continue;
+        }
+        if (p == vehiculo){
 			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enChacao[i] == 1){
