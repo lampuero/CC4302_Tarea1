@@ -16,6 +16,7 @@ FifoQueue esperaHaciaChacao;
 nCondition transEnChacao;
 nCondition transEnPargua;
 
+
 void inicializar(int p){
     mon = nMakeMonitor();
     transEnChacao = nMakeCondition(mon);
@@ -45,12 +46,12 @@ void transbordoAChacao(int v){
     int vehiculoATransportar = v;
     int primerVehiculo;
     nEnter(mon);
-	PutObj(esperaHaciaChacao, &vehiculoATransportar);
+    PutObj(esperaHaciaChacao, &vehiculoATransportar);
     int transdisponible = -1;
     while (transdisponible == -1){
-		int *vehiculo = (int *)GetObj(esperaHaciaChacao);
-		primerVehiculo = *vehiculo;
-		if (vehiculoATransportar == primerVehiculo){
+        int *vehiculo = (int *)GetObj(esperaHaciaChacao);
+        primerVehiculo = *vehiculo;
+        if (vehiculoATransportar == primerVehiculo){
 			// Caso: primero en la fila
 			for (int i = 0; i < numTRansbordadores ; ++i) {
 				if (enPargua[i] == 1){
@@ -108,6 +109,7 @@ void transbordoAChacao(int v){
     nExit(mon);
     haciaChacao(transdisponible, v);
     nEnter(mon);
+    //nPrintf("LLego a Chacao %i en %i\n", v, transdisponible);
 	transHaciaChacao--;
     enChacao[transdisponible] = 1;
     nSignalCondition(transEnChacao);
@@ -117,10 +119,10 @@ void transbordoAPargua(int v){
     int vehiculoATransportar = v;
     int primerVehiculo;
     nEnter(mon);
-	PutObj(esperaHaciaPargua, &vehiculoATransportar);
+    PutObj(esperaHaciaPargua, &vehiculoATransportar);
     int transdisponible = -1;
     while (transdisponible == -1){
-        int *vehiculo = (int *)GetObj(esperaHaciaChacao);
+        int *vehiculo = (int *)GetObj(esperaHaciaPargua);
         primerVehiculo = *vehiculo;
         if (vehiculoATransportar == primerVehiculo){
 			// Caso: primero en la fila
@@ -180,6 +182,7 @@ void transbordoAPargua(int v){
     nExit(mon);
     haciaPargua(transdisponible, v);
     nEnter(mon);
+    //nPrintf("LLego a Pargua %i en %i\n", v, transdisponible);
 	transHaciaPargua--;
     enPargua[transdisponible] = 1;
     nSignalCondition(transEnPargua);
