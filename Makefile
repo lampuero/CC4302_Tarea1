@@ -4,7 +4,7 @@
 #   de ambiente NSYSTEM con el directorio en donde se encuentra
 #   la raiz de nSystem.  Por ejemplo en csh esto se hace con:
 #
-#   setenv NSYSTEM ~/nsystem64
+#   setenv NSYSTEM nsystem64
 #
 # - Compile ingresando el comando make
 #
@@ -15,7 +15,7 @@ LIBNSYS= $(NSYSTEM)/lib/libnSys.a
 CFLAGS= -ggdb -pedantic -Wall -std=c99 -I$(NSYSTEM)/include -I$(NSYSTEM)/src
 LFLAGS= -ggdb
 
-all: test-transbordo
+all: test-transbordo test-transbordo2
 
 .SUFFIXES:
 .SUFFIXES: .o .c .s
